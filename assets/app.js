@@ -82,6 +82,35 @@
     });
   }
 
+
+  /* ---------- audio page: filter + sort ---------- */
+  const alist = $("#alist");
+  if (alist) {
+    const rows = [...alist.querySelectorAll(".arow")];
+    rows.forEach(r => { r._s = norm(r.textContent); });
+    const fi = $("#afilter"), fa = $("#aalbum"), fy = $("#ayear"), count = $("#acount"), none = $("#aempty");
+    const apply = () => {
+      const toks = tokens(fi.value);
+      let n = 0;
+      rows.forEach(r => {
+        const ok = hit(r._s, toks) && (!fa || !fa.value || r.dataset.album === fa.value) && (!fy || !fy.value || r.dataset.year === fy.value);
+        r.hidden = !ok; if (ok) n++;
+      });
+      count.textContent = n === rows.length ? `${n} recordings` : `Showing ${n} of ${rows.length}`;
+      none.hidden = n > 0;
+    };
+    let t;
+    fi.addEventListener("input", () => { clearTimeout(t); t = setTimeout(apply, 100); });
+    [fa, fy].forEach(el => el && el.addEventListener("change", apply));
+    document.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => {
+      document.querySelectorAll(".seg button").forEach(x => x.classList.toggle("on", x === b));
+      const byNew = b.dataset.sort === "new";
+      rows.slice().sort((x, y) => byNew
+        ? (Number(y.dataset.year || 0) - Number(x.dataset.year || 0)) || (x.dataset.i - y.dataset.i)
+        : x.dataset.i - y.dataset.i).forEach(r => alist.appendChild(r));
+    }));
+  }
+
   /* ---------- QR code for desktop visitors ---------- */
   const qr = $("#qr");
   if (qr) window.addEventListener("load", () => {
